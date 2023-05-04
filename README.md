@@ -14,7 +14,7 @@ Lexical substitution (LS) aims at finding appropriate substitutes for a target w
 
 ## Step 1: Downlaod the pretrained model
 
-You need to download the paraphraser from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing), and put it into folder "checkpoints/⁨para⁩/transformer/⁩". For candidates ranking, we use [BLEURT](https://huggingface.co/Elron/bleurt-large-512) and BARTscore[https://github.com/neulab/BARTScore].
+You need to download the paraphraser from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing), and put it into folder "checkpoints/⁨para⁩/transformer/⁩". For candidates ranking, we use [BLEURT](https://huggingface.co/Elron/bleurt-large-512) and BARTscore(https://github.com/neulab/BARTScore).
 
 ## Step 2: Run our code 
 
