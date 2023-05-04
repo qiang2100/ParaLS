@@ -6,14 +6,15 @@ Lexical substitution (LS) aims at finding appropriate substitutes for a target w
 
 # Requirements and Installation
 
-*  Our code is based on [Fairseq](https://github.com/pytorch/fairseq) version=10.2
+*  Our code is mainly based on [Fairseq](https://github.com/pytorch/fairseq) version=10.2 with customized modification of scripts, To start, you need to clone this repo and install fairseq firstly using pip install -e .
 * [PyTorch](http://pytorch.org/) version = 1.7.1
 * Python version >= 3.7
+* Other dependencies: pip install -r requirements.txt
 * For training new models, you'll also need an NVIDIA GPU and [NCCL](https://github.com/NVIDIA/nccl)
 
-## Step 1: Downlaod the pretrained paraphraser modeling
+## Step 1: Downlaod the pretrained model
 
-You need to download the paraphraser from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing), and put it into folder "checkpoints/⁨para⁩/transformer/⁩"
+You need to download the paraphraser from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing), and put it into folder "checkpoints/⁨para⁩/transformer/⁩". For candidates ranking, we use [BLEURT](https://huggingface.co/Elron/bleurt-large-512) and BARTscore[https://github.com/neulab/BARTScore].
 
 ## Step 2: Run our code 
 
