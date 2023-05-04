@@ -4,7 +4,7 @@
 from operator import index
 import os
 from pyexpat import model
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 import argparse
@@ -47,29 +47,16 @@ from bart_score import BARTScorer
 from bleurt import score
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-# scorer = BERTScorer(lang="en", rescale_with_baseline=True)
-
-
 
 bart_scorer=BARTScorer(device="cuda",checkpoint="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn")
 bart_scorer.load(path="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn/bart.pth")
-# bart_scorer=None
-# bleurt_scorer=score.BleurtScorer("/home/yz/liukang/liukang/huggingface/bleurt/BLEURT-20")
+
 
 bleurt_tokenizer = AutoTokenizer.from_pretrained("bleurt-large-512")
 
 bleurt_scorer = AutoModelForSequenceClassification.from_pretrained("bleurt-large-512").cuda()
 bleurt_scorer.eval()
-# bleurt_scorer=None
-# import gensim
-# from gensim.test.utils import datapath,get_tmpfile
-# from gensim.scripts.glove2word2vec import glove2word2vec
-# from gensim.models import KeyedVectors
-# wordVecPath = "/home/yz/liukang/liukang/fairseq-main_prefix/fairseq-main_prefix/checkpoints/glove/glove.6B.300d.txt"
-# glove_file = datapath(wordVecPath)
-# tmp_file = get_tmpfile('glove_word2vec.txt')
-# glove2word2vec(glove_file,tmp_file)
-# glove_model = KeyedVectors.load_word2vec_format(tmp_file)
+
 
 
 import json
@@ -350,13 +337,7 @@ def give_real_scores_ahead(tgt_dict,outputs,scores_with_suffix,scores_with_suffi
             scores_with_suffix[:,i]-=scores_with_suffix[:,first_index-1]
         else:
             pass
-    # print(outputs)
-    # print(scores_with_suffix[:,0:5])
-    # for i in range(first_index,last_index):
-    #     pass
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-    # print(scores_with_suffix[:,0:5])
+
     scores_with_suffix[scores_with_suffix_masks]=-math.inf
     for j in range(0,first_index):
         scores_with_suffix[:,j]=torch.tensor(-math.inf)
@@ -437,15 +418,7 @@ def extract_substitute(output_sentences, original_sentence, complex_word, thresh
 
     index_of_complex_word = -1
 
-    # if complex_word  not in original_words:
-    #     i = 0
-    #     for word in original_words:
-    #         if complex_word == word.lower():
-    #             index_of_complex_word = i
-    #             break
-    #         i += 1
-    # else:
-    #     index_of_complex_word = original_words.index(complex_word)
+
     index_of_complex_word=word_index
     if index_of_complex_word == -1:
         print("******************no found the complex word*****************")
@@ -543,19 +516,7 @@ def extract_substitute(output_sentences, original_sentence, complex_word, thresh
             real_prev_scores.append(prev_scores[s1_count])
 
     if len(substitutes)>0:
-        # bert_scores = substitutes_BertScore(context, complex_word, substitutes)
 
-        # #print(substitutes)
-        # bert_scores = bert_scores.tolist()
-        
-        # #pdb.set_trace()
-
-
-        # filter_substitutes, bert_scores = filterSubstitute(substitutes, bert_scores, threshold)
-
-        # rank_bert = sorted(bert_scores,reverse = True)
-
-        # rank_bert_substitutes = [filter_substitutes[bert_scores.index(v)] for v in rank_bert]
         filter_substitutes=substitutes
         rank_bert_substitutes=substitutes
 
@@ -632,14 +593,7 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
                 suffix1=suffix1.strip()    
 
             suffix1=" ".join(suffix1.split(" ")[:2])
-            # if "," in suffix1:
-            #     if suffix1.index(",")!=0:
-            #         suffix1=suffix1[:suffix1.index(",")]
-            #suffix1 = sentence[index_complex+:index_complex+1].strip()
-            # suffix1 = " ".join(ori_words[ori_words.index(complex_word)+1:ori_words.index(complex_word)+7])
-            # suffix1=process_string(suffix1)
-            # medium_qutos=[",",".","!","?","\"","``",""]
-            # for char1 in suffix1:
+
 
         else:
             pass
@@ -655,9 +609,6 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
     prefix_tokens = prefix_tokens[:-1].view(1,-1)
 
     complex_tokens = model.encode(complex_word)
-    #1.make some change to the original sentence
-    #=prefix.strip()+" "+process_string(complex_word.strip()+" "+stored_suffix1.strip())
-    #sentence=new_sentence
 
 
     sentence_tokens = model.encode(sentence)
@@ -668,11 +619,7 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
     attn_len = len(prefix_tokens[0])+len(complex_tokens)-1
     if len((model.tgt_dict.string(prefix_tokens).strip().replace("@@ ","")).strip().split())!=len(prefix.strip().split()):
         print("finding prefix not good before replace mask token!!!")
-        # if len((model.tgt_dict.string(prefix_tokens).strip().replace("@@ ","")).strip().replace("<unk>",""))!=len(prefix.strip().split()):
-        #     print("finding prefix not good!!!")
-    #outputs = model.generate2(sentence_tokens, beam=20, prefix_tokens=prefix_tokens)
-    # outputs,pre_scores = model.generate2(sentence_tokens.cuda(), beam=beam, prefix_tokens=prefix_tokens.cuda(), attn_len=attn_len)
-    #outputs,pre_scores = model.generate2(sentence_tokens.cuda(), beam=beam, prefix_tokens=prefix_tokens.cuda(), attn_len=attn_len,suffix_ids=suffix_tokens) 
+
     outputs,combined_sss,prev_masks,prev_masks2,scores_with_suffix,scores_with_suffix_masks,scores_with_dynamic = model.generate2(sentence_tokens.cuda(), 
                                                                                                             beam=beam, 
                                                                                                             prefix_tokens=prefix_tokens.cuda(), 
@@ -683,47 +630,19 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
                                                                                                             max_aheads=5)    
     outputs=outputs.cpu()
     
-    # for i in range(len(combined_sss)):
-    #     if combined_sss[i]!=[]:
-    #         if type(combined_sss[i])==list:
-    #             combined_sss[i][0]=combined_sss[i][0].to("cpu")
-    #             combined_sss[i][1]=combined_sss[i][1].to("cpu")
-    #         else:
-    #             combined_sss[i]=combined_sss[i].to("cpu")
-    # prev_masks=prev_masks.cpu()
-    # prev_masks2=prev_masks2.cpu()
+
     scores_with_suffix=scores_with_suffix.cpu()
     scores_with_suffix_masks=scores_with_suffix_masks.cpu()
 
-    # output_final_scores=give_real_scores(combined_sss,prev_masks,prev_masks2,suffix_tokens)
-    # # import pdb
-    # # pdb.set_trace()
 
-    # if combined_sss[1]!=[]:
-    #     # print("123")
-    #     outputs=outputs[torch.squeeze(torch.topk(output_final_scores,k=combined_sss[0][0].shape[1],dim=1)[1].view(1,-1),1)][0]
-    # else:
-    #     outputs=outputs[torch.squeeze(torch.topk(combined_sss[0][0],k=combined_sss[0][0].shape[1],dim=1)[1].view(1,-1),1)][0]
     embed_scores=give_embedding_scores(outputs,model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu(),complex_tokens=complex_tokens,temperature=0.2)
     #embed_scores=give_embedding_scores_v2(outputs,model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu(),complex_tokens=complex_tokens,temperature=0.2)
     assert embed_scores.size()==scores_with_suffix[:,:(outputs.size()[-1]-1)].size()
-    # alkl make change the embedding scores
-    #embed_scores=change_embedding_scores(outputs,embed_scores,prefix_len=len(prefix_tokens[0]),max_ahead=5)
-    #scores_with_suffix[:,:(outputs.size()[-1]-1)]=scores_with_suffix[:,:(outputs.size()[-1]-1)]+embed_scores
+
 
     outputs,outputs_scores,candis=give_real_scores_ahead(model.tgt_dict,outputs,scores_with_suffix,scores_with_suffix_masks,suffix_tokens,prefix_len=len(prefix_tokens[0]),prefix_str=prefix,max_ahead=5,flag=1)
     
-    # glove_scores_static=give_embedding_scores_v4(complex_tokens[:-1],candis,model,temperature=0.2,tokens_embedding=model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu())
-    # outputs_scores=torch.tensor(outputs_scores)+glove_scores_static
-    # outputs_scores=outputs_scores.tolist()
-    
-    # outputs=outputs[:20]
-    # outputs_scores=outputs_scores[:20]
-    # candis=candis[:20]
 
-    #glove_scores=get_glove_embedding(complex_word,candis,glove_model,temperature=1)
-    #glove_scores=torch.tensor(outputs_scores)-torch.tensor(outputs_scores)
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,candis)+cal_bleurt_score(sentence,complex_word,word_index,candis)
     
     
     new_outputs_scores=torch.tensor(outputs_scores)
@@ -735,30 +654,14 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
     outputs_scores=[outputs_scores[index1].tolist() for index1 in new_indices]
     candis=[candis[index1] for index1 in new_indices]
 
-    #glove_scores=[glove_scores[index1].tolist() for index1 in new_indices]
-
-    #outputs_scores=outputs_scores.tolist()
-
-    #print(outputs)
-
-    #outputs=outputs[torch.squeeze(torch.topk(output_final_scores,k=beam,dim=1)[-1].view(1,-1),0)][:50]
-
-    #output_sentences = [model.decode(x['tokens']) for x in outputs]
     output_sentences=[model.decode(x) for x in outputs]
     if output_sentences==[]:
         print("find a missing prefix sentence!!!")
         return [],[],[],[]
-    # for s1 in output_sentences:
-    #     print(s1[:200])
-    # for s1 in outputs:
-    #     print(model.tgt_dict.string(s1)[:150])   
-    #bertscore_substitutes, ranking_bertscore_substitutes = extract_substitute(output_sentences, sentence, complex_word, threshold)
+
     bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores = extract_substitute(output_sentences, sentence, complex_word,
                                                                               threshold,outputs_scores,word_index,sentence_words,target_pos,target_lemma)
-    #print(pre_scores)
 
-    #for sen in output_sentences:
-    #    print(sen)
 
     bertscore_substitutes=bertscore_substitutes[:50]
     ranking_bertscore_substitutes=ranking_bertscore_substitutes[:50]
@@ -767,20 +670,10 @@ def lexicalSubstitute(model, sentence, sentence_words, prefix,word_index,complex
 
 
     #glove_scores_static=give_embedding_scores_v4(complex_tokens[:-1],bertscore_substitutes,model,temperature=0.2,tokens_embedding=model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu())
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bert_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #glove_scores=cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #real_prev_scores=0.03*torch.tensor(real_prev_scores)+glove_scores
+    glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
 
+    return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores.tolist()
 
-    #real_prev_scores=real_prev_scores.tolist()
-
-    #bertscore_substitutes, ranking_bertscore_substitutes = extractSubstitute_bertscore(output_sentences, sentence, complex_word, threshold)
-    #suffix_substitutes = extractSubstitute_suffix(output_sentences, sentence, complex_word)
-
-    #return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores.tolist()
-    #return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores_static.tolist()
-    return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,1
 
 def pos_filter(pos_vocab,target_pos,candi,candi_lemma):
         PosMap={"v":"VERB", "n":"NOUN", "a":"ADJ", "r":"ADV"}
@@ -917,14 +810,7 @@ def main():
     en2en = TransformerModel.from_pretrained(args.paraphraser_path, checkpoint_file=args.paraphraser_model,bpe=args.bpe,
                                              bpe_codes=args.bpe_codes).cuda().eval()
 
-    #CS = []
 
-    #CS2 = []
-
-    #CS3 = []
-
-    #output_sr_file.write("beam:", args.beam, " bertscore:", args.bertscore)
-    #output_sr_file.write('\n')
     bert_substitutes_all=[]
     real_prev_scores_all=[]
     real_embed_scores_all=[]
@@ -936,10 +822,7 @@ def main():
         #     continue
         for instance in reader.words_candidate[main_word]:
             for context in reader.words_candidate[main_word][instance]:
-                # import pdb
-                # pdb.set_trace()
-                # if main_word!="forget.V":
-                #     continue
+
 
                 text = context[1]
                 original_text = text
@@ -961,24 +844,14 @@ def main():
                 real_prev_scores_all.append(real_prev_scores)
                 real_embed_scores_all.append(real_embed_scores)
             
-                # write_all_results(main_word, instance, target_pos, args.output_SR_file,
-                #                   bert_substitutes, real_prev_scores, evaluation_metric)     
-                                                
-                #CS2.append(bert_substitutes[:10])
 
-                #CS3.append(bert_rank_substitutes[:10])
-                #final_str=" ".join(complex_labels[i])+"|||"+" ".join(bert_rank_substitutes[:10])+"|||"+" ".join(list(set(complex_labels[i])&set(bert_rank_substitutes[:10])))+"\n"
-                #final_str="&".join(complex_labels[i])+"|||"+" ".join(bert_substitutes[:10])+"|||"+" ".join(list(set(complex_labels[i])&set(bert_substitutes[:10])))+"\n"
 
     import numpy as np
     import copy
     import os
 
     #range1=np.arange(1,2,1)
-    range1=np.arange(0.2,0.4,0.2)
-    #range1=np.arange(0.005,0.1,0.005)
-    #range2_log_softmax=np.arange(0.2,0.4,0.2)
-    #range2_log_softmax=np.arange(0.,0.4,0.2)
+    range1=np.arange(0.02,0.04,0.02)
     range2_log_softmax=np.arange(1,2,1)
 
     for log_quto in range2_log_softmax:
@@ -1016,28 +889,13 @@ def main():
                             target_pos=target_pos
                         ).lower().strip()      
 
-                        # target_lemma = lemma_word_spacy(
-                        #     target_word,
-                        #     target_pos=target_pos
-                        # ).lower().strip()      
-
-                        #print("ori_score",real_prev_scores_all[count_1][:10])
                         tmp_log_embed_scores=torch.tensor(tmp_real_embed_scores_all[count_1])
-                        #tmp_log_embed_scores=torch.tensor(tmp_real_embed_scores_all[count_1])/1
-                        #tmp_log_embed_scores=F.log_softmax(tmp_log_embed_scores,dim=0)
+
                         tmp_log_embed_scores=tmp_log_embed_scores.tolist()
 
-
-                        # for k1 in range(len(tmp_real_prev_scores_all[count_1])):
-                        #     tmp_real_prev_scores_all[count_1][k1]=tmp_real_prev_scores_all[count_1][k1]-tmp_real_embed_scores_all[count_1][k1]
-                            # tmp_real_prev_scores_all[count_1][k1]+=embed_quto*tmp_real_embed_scores_all[count_1][k1] 
-
-                        # for k1 in range(len(tmp_real_prev_scores_all[count_1])):
-                        #     #tmp_real_prev_scores_all[count_1][k1]=tmp_real_prev_scores_all[count_1][k1]-tmp_real_embed_scores_all[count_1][k1]
-                        #     #tmp_real_prev_scores_all[count_1][k1]+=embed_quto*tmp_log_embed_scores[k1]   
-                        #     tmp_real_prev_scores_all[count_1][k1]=embed_quto*tmp_real_prev_scores_all[count_1][k1]+tmp_log_embed_scores[k1]
-                        #     #tmp_real_prev_scores_all[count_1][k1]=tmp_log_embed_scores[k1]
-                        #     pass
+                        for k1 in range(len(tmp_real_prev_scores_all[count_1])):
+                            tmp_real_prev_scores_all[count_1][k1]=embed_quto*tmp_real_prev_scores_all[count_1][k1]+tmp_log_embed_scores[k1]
+                            pass
                         
                         write_all_results(main_word, instance, target_pos, work_dir+args.output_SR_file+".embed."+str(embed_quto),
                                         tmp_bert_substitutes_all[count_1], tmp_real_prev_scores_all[count_1], evaluation_metric)
@@ -1045,28 +903,28 @@ def main():
                         #print("after_score",real_prev_scores_all[count_1][:10])
 
                         count_1+=1  
-            # print("*"*100)
-            # test_golden_file="data/LS14/test/coinco_test.gold"
-            # output_results=work_dir+args.output_SR_file+".embed."+str(embed_quto)
-            # results_file=work_dir+args.output_score_file+".embed."+str(embed_quto)
-            # evaluation_metric.calculation_perl(
-            #     test_golden_file,
-            #     output_results + ".best",
-            #     output_results + ".oot",
-            #     results_file + ".best",
-            #     results_file + ".oot"
-            # )
-            # evaluation_metric.calculation_p1(
-            #     test_golden_file,
-            #     output_results + "_p1.txt",
-            #     results_file + "_p1.txt"
-            # )
+            print("*"*100)
+            test_golden_file="data/LS14/test/coinco_test.gold"
+            output_results=work_dir+args.output_SR_file+".embed."+str(embed_quto)
+            results_file=work_dir+args.output_score_file+".embed."+str(embed_quto)
+            evaluation_metric.calculation_perl(
+                test_golden_file,
+                output_results + ".best",
+                output_results + ".oot",
+                results_file + ".best",
+                results_file + ".oot"
+            )
+            evaluation_metric.calculation_p1(
+                test_golden_file,
+                output_results + "_p1.txt",
+                results_file + "_p1.txt"
+            )
             
-            # evaluation_metric.calculation_p3(
-            #     test_golden_file,
-            #     output_results + "_p3.txt",
-            #     results_file + "_p3.txt"
-            # )
+            evaluation_metric.calculation_p3(
+                test_golden_file,
+                output_results + "_p3.txt",
+                results_file + "_p3.txt"
+            )
 if __name__ == "__main__":
     main()
 
