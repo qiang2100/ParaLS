@@ -56,26 +56,14 @@ def gen_gpt2_string(tgt_dict,input):
         input=torch.tensor([input])
     return tgt_dict.bpe.decode(tgt_dict.task.source_dictionary.string(input))
 
-# bart_scorer=BARTScorer(device="cuda",checkpoint="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn")
-# bart_scorer.load(path="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn/bart.pth")
-bart_scorer=None
-# bleurt_scorer=score.BleurtScorer("/home/yz/liukang/liukang/huggingface/bleurt/BLEURT-20")
+bart_scorer=BARTScorer(device="cuda",checkpoint="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn")
+bart_scorer.load(path="/home/yz/liukang/liukang/huggingface/facebook/bart-large-cnn/bart.pth")
 
-# bleurt_tokenizer = AutoTokenizer.from_pretrained("bleurt-large-512")
 
-# bleurt_scorer = AutoModelForSequenceClassification.from_pretrained("bleurt-large-512").cuda()
-# bleurt_scorer.eval()
+bleurt_tokenizer = AutoTokenizer.from_pretrained("bleurt-large-512")
+bleurt_scorer = AutoModelForSequenceClassification.from_pretrained("bleurt-large-512").cuda()
+bleurt_scorer.eval()
 
-bleurt_scorer=None
-# import gensim
-# from gensim.test.utils import datapath,get_tmpfile
-# from gensim.scripts.glove2word2vec import glove2word2vec
-# from gensim.models import KeyedVectors
-# wordVecPath = "/home/yz/liukang/liukang/fairseq-main_prefix/fairseq-main_prefix/checkpoints/glove/glove.6B.300d.txt"
-# glove_file = datapath(wordVecPath)
-# tmp_file = get_tmpfile('glove_word2vec.txt')
-# glove2word2vec(glove_file,tmp_file)
-# glove_model = KeyedVectors.load_word2vec_format(tmp_file)
 
 
 import json
@@ -145,8 +133,7 @@ def give_embedding_scores_v2(complex_word,candis,glove_model,temperature=None,to
     else:
         complex_embed=tokens_embedding[complex_word[0]]
     
-    # except:
-    #     print("complex word not in the glove model")
+
 
     sim_cal=nn.CosineSimilarity(dim=-1, eps=1e-6)
     sim_matrix=[]
@@ -243,18 +230,15 @@ def give_dynamic_embedding_scores(model,candis,prefix,ori_sentence,ori_index,lay
     prefix_tokens=model.encode(prefix)[:-1]
     ori_sentence_tokens=model.encode(ori_sentence)
     ori_word_tokens=model.encode(ori_word)[1:-1]
-    # if len(ori_word_tokens)>1:
-    #     return torch.zeros(len(candis))
+
 
     this_input_tokens=ori_sentence_tokens
     this_first_index=len(prefix_tokens)
     this_last_index=this_first_index+len(ori_word_tokens)
-    # this_encoder_outs=encoder(this_input_tokens.unsqueeze(0).cuda(),return_all_hiddens=True)["encoder_states"][layer_index].cpu().squeeze()
-    # this_ori_outs=this_encoder_outs[this_first_index:this_last_index].squeeze()
+
 
     if layer_index!=None:
         this_encoder_outs=encoder(this_input_tokens.unsqueeze(0).cuda(),return_all_hiddens=True)["encoder_states"][layer_index].cpu().squeeze()
-        #this_ori_outs=this_encoder_outs[this_first_index:this_last_index].squeeze()
         this_ori_outs=torch.sum(this_encoder_outs[:,1:-1],dim=0)/(len(this_encoder_outs)-2)
 
     else:
@@ -275,8 +259,6 @@ def give_dynamic_embedding_scores(model,candis,prefix,ori_sentence,ori_index,lay
         this_last_index=this_first_index+len(this_word_tokens)
         if layer_index!=None:
             this_encoder_outs=encoder(this_input_tokens.unsqueeze(0).cuda(),return_all_hiddens=True)["encoder_states"][layer_index].cpu().squeeze()
-            #this_dynamic_outs=this_encoder_outs[this_first_index:this_last_index]
-            #this_dynamic_outs=(torch.sum(this_dynamic_outs,dim=0)/len(this_dynamic_outs)).squeeze()
             this_dynamic_outs=torch.sum(this_encoder_outs[:,1:-1],dim=0)/(len(this_encoder_outs)-2)
             
 
@@ -294,8 +276,7 @@ def give_dynamic_embedding_scores(model,candis,prefix,ori_sentence,ori_index,lay
         sim_matrix.append(sim_candi_complex)
 
     sim_matrix=torch.tensor(sim_matrix)
-    #sim_matrix=sim_matrix/0.2
-    #sim_matrix=F.log_softmax(sim_matrix,dim=0)
+
 
     return  sim_matrix
 
@@ -337,8 +318,7 @@ def cal_bart_score(sentence,complex_word,complex_index,candis):
 def cal_bleurt_score(sentence,complex_word,complex_index,candis):
     candis_scores=[]
     sentence_list=sentence.split()
-    #prefix=" ".join(sentence.split()[max(0,complex_index-4):complex_index])
-    #suffix=" ".join(sentence.split()[complex_index+1:min(complex_index+5,len(sentence_list))])
+
 
     prefix=" ".join(sentence.split()[0:complex_index]).strip()
     suffix=" ".join(sentence.split()[complex_index+1:]).strip()
@@ -360,10 +340,7 @@ def cal_bleurt_score(sentence,complex_word,complex_index,candis):
         F1=bleurt_scorer(input_ids=input_dict["input_ids"].cuda(),\
                                 token_type_ids=input_dict["token_type_ids"].cuda(),\
                                 attention_mask=input_dict["attention_mask"].cuda())[0].squeeze()
-    #F1=np.exp(F1).tolist()
-    # import pdb
-    # pdb.set_trace()
-    #F1=torch.tensor(F1)
+
     return F1.cpu()
 
 @torch.no_grad()
@@ -431,13 +408,7 @@ def give_real_scores_ahead(tgt_dict,outputs,scores_with_suffix,scores_with_suffi
             scores_with_suffix[:,i]-=scores_with_suffix[:,first_index-1]
         else:
             pass
-    # print(outputs)
-    # print(scores_with_suffix[:,0:5])
-    # for i in range(first_index,last_index):
-    #     pass
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-    # print(scores_with_suffix[:,0:5])
+
     scores_with_suffix[scores_with_suffix_masks]=-math.inf
     for j in range(0,first_index):
         scores_with_suffix[:,j]=torch.tensor(-math.inf)
@@ -475,11 +446,7 @@ def give_real_scores_ahead(tgt_dict,outputs,scores_with_suffix,scores_with_suffi
         elif hope_len==-1:
             hope_outputs.append(outputs[beam_idx[i]])
             hope_outputs_scores.append(sorted_scores[i].tolist())
-        # if len(tmp_str1.split())==len(prefix_str.split())+1:
-        #     print(tmp_str1)
-    #print("&"*100)
-    # import pdb
-    # pdb.set_trace()
+
     return hope_outputs,hope_outputs_scores,candis
 
 
@@ -516,15 +483,7 @@ def give_real_scores_ahead_bart(tgt_dict,outputs,scores_with_suffix,scores_with_
         ids_after_prefix_tokens_masks=torch.tensor(ids_after_prefix_tokens_masks).reshape(beam_size,-1)
         scores_with_suffix[ids_after_prefix_tokens_masks.squeeze()]=-math.inf
 
-    # print(scores_with_suffix[:,0:5])
 
-    # print(outputs)
-    # print(scores_with_suffix[:,0:5])
-    # for i in range(first_index,last_index):
-    #     pass
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-    # print(scores_with_suffix[:,0:5])
     scores_with_suffix[scores_with_suffix_masks]=-math.inf
     for j in range(0,first_index):
         scores_with_suffix[:,j]=torch.tensor(-math.inf)
@@ -549,9 +508,7 @@ def give_real_scores_ahead_bart(tgt_dict,outputs,scores_with_suffix,scores_with_
             continue
         
         tmp_str1=tgt_dict.bpe.decode(tgt_dict.task.source_dictionary.string(outputs[beam_idx[i],:(len_idx[i]+1)])).strip()
-        #tmp_str1=tgt_dict.string(outputs[beam_idx[i],:(len_idx[i]+1)]).replace("@@ ","")
-        #tmp_str1=tmp_str1.replace("<unk>","")
-        #if len(tmp_str1.strip().split())==hope_len:
+
         if "<unk>" in tmp_str1:
             print("finding a unk in prefix str")
             tmp_str1=tmp_str1.replace("<unk>","|")
@@ -565,11 +522,7 @@ def give_real_scores_ahead_bart(tgt_dict,outputs,scores_with_suffix,scores_with_
         elif hope_len==-1:
             hope_outputs.append(outputs[beam_idx[i]])
             hope_outputs_scores.append(sorted_scores[i].tolist())
-        # if len(tmp_str1.split())==len(prefix_str.split())+1:
-        #     print(tmp_str1)
-    #print("&"*100)
-    # import pdb
-    # pdb.set_trace()
+
     return hope_outputs,hope_outputs_scores,candis
 
 
@@ -607,15 +560,7 @@ def give_real_scores_ahead_bart_len_regular(tgt_dict,outputs,scores_with_suffix,
         ids_after_prefix_tokens_masks=torch.tensor(ids_after_prefix_tokens_masks).reshape(beam_size,-1)
         scores_with_suffix[ids_after_prefix_tokens_masks.squeeze()]=-math.inf
 
-    # print(scores_with_suffix[:,0:5])
 
-    # print(outputs)
-    # print(scores_with_suffix[:,0:5])
-    # for i in range(first_index,last_index):
-    #     pass
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-        #scores_with_suffix[:,i]/=(len(suffix_tokens)+i-prefix_len+1)
-    # print(scores_with_suffix[:,0:5])
     scores_with_suffix[scores_with_suffix_masks]=-math.inf
     for j in range(0,first_index):
         scores_with_suffix[:,j]=torch.tensor(-math.inf)
@@ -641,9 +586,7 @@ def give_real_scores_ahead_bart_len_regular(tgt_dict,outputs,scores_with_suffix,
         
         tmp_str1=tgt_dict.bpe.decode(tgt_dict.task.source_dictionary.string(outputs[beam_idx[i],:(len_idx[i]+1)])).strip()
         tmp_str1_len=len_idx[i]-first_index+len(suffix_tokens)
-        #tmp_str1=tgt_dict.string(outputs[beam_idx[i],:(len_idx[i]+1)]).replace("@@ ","")
-        #tmp_str1=tmp_str1.replace("<unk>","")
-        #if len(tmp_str1.strip().split())==hope_len:
+
         if "<unk>" in tmp_str1:
             print("finding a unk in prefix str")
             tmp_str1=tmp_str1.replace("<unk>","|")
@@ -652,32 +595,13 @@ def give_real_scores_ahead_bart_len_regular(tgt_dict,outputs,scores_with_suffix,
             #candis.append(nltk.word_tokenize(tmp_str1)[-1].strip())
             candis.append(" "+nltk.word_tokenize(tmp_str1)[-1].strip())
             hope_outputs.append(outputs[beam_idx[i]])
-            #print(tgt_dict.string(outputs[beam_idx[i]]),sorted_scores[i])
-            #hope_outputs_scores.append(sorted_scores[i].tolist())
+
             hope_outputs_scores.append(sorted_scores[i].tolist()/(tmp_str1_len.tolist()))
         elif hope_len==-1:
             hope_outputs.append(outputs[beam_idx[i]])
             hope_outputs_scores.append(sorted_scores[i].tolist())
-        # if len(tmp_str1.split())==len(prefix_str.split())+1:
-        #     print(tmp_str1)
-    #print("&"*100)
-    # import pdb
-    # pdb.set_trace()
+
     return hope_outputs,hope_outputs_scores,candis
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -717,15 +641,7 @@ def extract_substitute(output_sentences, original_sentence, complex_word, thresh
 
     index_of_complex_word = -1
 
-    # if complex_word  not in original_words:
-    #     i = 0
-    #     for word in original_words:
-    #         if complex_word == word.lower():
-    #             index_of_complex_word = i
-    #             break
-    #         i += 1
-    # else:
-    #     index_of_complex_word = original_words.index(complex_word)
+
     index_of_complex_word=word_index
     if index_of_complex_word == -1:
         print("******************no found the complex word*****************")
@@ -830,19 +746,7 @@ def extract_substitute(output_sentences, original_sentence, complex_word, thresh
             real_prev_scores.append(prev_scores[s1_count])
 
     if len(substitutes)>0:
-        # bert_scores = substitutes_BertScore(context, complex_word, substitutes)
 
-        # #print(substitutes)
-        # bert_scores = bert_scores.tolist()
-        
-        # #pdb.set_trace()
-
-
-        # filter_substitutes, bert_scores = filterSubstitute(substitutes, bert_scores, threshold)
-
-        # rank_bert = sorted(bert_scores,reverse = True)
-
-        # rank_bert_substitutes = [filter_substitutes[bert_scores.index(v)] for v in rank_bert]
         filter_substitutes=substitutes
         rank_bert_substitutes=substitutes
 
@@ -900,11 +804,6 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
     
     index_complex = word_index
     
-    # if index_complex==0 and target_pos.lower()!="n":
-    #     complex_word=complex_word.capitalize()
-    #     sentence=sentence.capitalize()
-    #     sentence_words[0]=sentence_words[0].capitalize()
-
     ori_words=sentence_words
     prefix = prefix
     suffix1 = ""
@@ -935,14 +834,7 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
                     suffix1=suffix1[2:].strip()
 
             suffix1=" ".join(suffix1.split(" ")[:2])
-            # if "," in suffix1:
-            #     if suffix1.index(",")!=0:
-            #         suffix1=suffix1[:suffix1.index(",")]
-            #suffix1 = sentence[index_complex+:index_complex+1].strip()
-            # suffix1 = " ".join(ori_words[ori_words.index(complex_word)+1:ori_words.index(complex_word)+7])
-            # suffix1=process_string(suffix1)
-            # medium_qutos=[",",".","!","?","\"","``",""]
-            # for char1 in suffix1:
+
 
         else:
             pass
@@ -973,9 +865,7 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
             sentence=" ".join(ori_words[:index_complex+1]+ori_words[index_complex+2:])
     
 
-    #1.make some change to the original sentence
-    #=prefix.strip()+" "+process_string(complex_word.strip()+" "+stored_suffix1.strip())
-    #sentence=new_sentence
+
 
     if index_complex==0:
         sentence_tokens = model.encode(" "+sentence)
@@ -993,13 +883,7 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
     suffix_tokens=suffix_tokens.tolist()
     attn_len = len(prefix_tokens[0])+len(complex_tokens)-1
 
-    # if len((model.tgt_dict.string(prefix_tokens).strip().replace("@@ ","")).strip().split())!=len(prefix.strip().split()):
-    #     print("finding prefix not good before replace mask token!!!")
-        # if len((model.tgt_dict.string(prefix_tokens).strip().replace("@@ ","")).strip().replace("<unk>",""))!=len(prefix.strip().split()):
-        #     print("finding prefix not good!!!")
-    #outputs = model.generate2(sentence_tokens, beam=20, prefix_tokens=prefix_tokens)
-    # outputs,pre_scores = model.generate2(sentence_tokens.cuda(), beam=beam, prefix_tokens=prefix_tokens.cuda(), attn_len=attn_len)
-    #outputs,pre_scores = model.generate2(sentence_tokens.cuda(), beam=beam, prefix_tokens=prefix_tokens.cuda(), attn_len=attn_len,suffix_ids=suffix_tokens) 
+
     outputs,combined_sss,prev_masks,prev_masks2,scores_with_suffix,scores_with_suffix_masks,scores_with_dynamic = model.generate3([sentence_tokens.cuda()], 
                                                                                                             beam=beam, 
                                                                                                             prefix_tokens=prefix_tokens.cuda(), 
@@ -1010,38 +894,11 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
                                                                                                             max_aheads=5)    
     outputs=outputs[0].cpu()
     
-    # for i in range(len(combined_sss)):
-    #     if combined_sss[i]!=[]:
-    #         if type(combined_sss[i])==list:
-    #             combined_sss[i][0]=combined_sss[i][0].to("cpu")
-    #             combined_sss[i][1]=combined_sss[i][1].to("cpu")
-    #         else:
-    #             combined_sss[i]=combined_sss[i].to("cpu")
-    # try:
-    #     prev_masks=prev_masks.cpu()
-    #     prev_masks2=prev_masks2.cpu()
-    # except:
-    #     pass
+
     scores_with_suffix=scores_with_suffix.cpu()
     scores_with_suffix_masks=scores_with_suffix_masks.cpu()
 
-    # output_final_scores=give_real_scores(combined_sss,prev_masks,prev_masks2,suffix_tokens)
-    # # import pdb
-    # # pdb.set_trace()
 
-    # if combined_sss[1]!=[]:
-    #     # print("123")
-    #     outputs=outputs[torch.squeeze(torch.topk(output_final_scores,k=combined_sss[0][0].shape[1],dim=1)[1].view(1,-1),1)][0]
-    # else:
-    #     outputs=outputs[torch.squeeze(torch.topk(combined_sss[0][0],k=combined_sss[0][0].shape[1],dim=1)[1].view(1,-1),1)][0]
-    #embed_scores=give_embedding_scores(outputs,model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu(),complex_tokens=complex_tokens,temperature=0.2)
-    #embed_scores=give_embedding_scores_v2(outputs,model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu(),complex_tokens=complex_tokens,temperature=0.2)
-    #assert embed_scores.size()==scores_with_suffix[:,:(outputs.size()[-1]-1)].size()
-    # alkl make change the embedding scores
-    #embed_scores=change_embedding_scores(outputs,embed_scores,prefix_len=len(prefix_tokens[0]),max_ahead=5)
-    #scores_with_suffix[:,:(outputs.size()[-1]-1)]=scores_with_suffix[:,:(outputs.size()[-1]-1)]+embed_scores
-
-    #outputs,outputs_scores,candis=give_real_scores_ahead(model.tgt_dict,outputs,scores_with_suffix,scores_with_suffix_masks,suffix_tokens,prefix_len=len(prefix_tokens[0]),prefix_str=prefix,max_ahead=5,flag=1)
     outputs,outputs_scores,candis=give_real_scores_ahead_bart(
                                                         model,
                                                         outputs,
@@ -1052,25 +909,7 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
                                                         prefix_str=prefix,
                                                         max_ahead=5,
                                                         flag=1)
-    #outputs,outputs_scores,candis=give_real_scores_ahead_bart_len_regular(model,outputs,scores_with_suffix,scores_with_suffix_masks,suffix_tokens,prefix_len=len(prefix_tokens[0]),prefix_str=prefix,max_ahead=5,flag=1)
 
-    # if index_complex!=0:
-    #     tmp_candis=[" "+word1 for word1 in candis]
-    # else:
-    #     tmp_candis=[" "+word1 for word1 in candis]
-
-    # glove_scores_static=give_embedding_scores_v4(complex_tokens[:-1],tmp_candis,model,temperature=0.2,tokens_embedding=model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu())
-    # outputs_scores=torch.tensor(outputs_scores)+glove_scores_static
-    # #outputs_scores=torch.tensor(outputs_scores)
-    # outputs_scores=outputs_scores.tolist()
-    
-    # outputs=outputs[:20]
-    # outputs_scores=outputs_scores[:20]
-    # candis=candis[:20]
-
-    #glove_scores=get_glove_embedding(complex_word,candis,glove_model,temperature=1)
-    #glove_scores=torch.tensor(outputs_scores)-torch.tensor(outputs_scores)
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,candis)+cal_bleurt_score(sentence,complex_word,word_index,candis)
     
     
     new_outputs_scores=torch.tensor(outputs_scores)
@@ -1080,25 +919,12 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
     outputs=[outputs[index1] for index1 in new_indices]
  
     outputs_scores=[outputs_scores[index1].tolist() for index1 in new_indices]
-    #glove_scores=[glove_scores[index1].tolist() for index1 in new_indices]
 
-    #outputs_scores=outputs_scores.tolist()
-
-    #print(outputs)
-
-    #outputs=outputs[torch.squeeze(torch.topk(output_final_scores,k=beam,dim=1)[-1].view(1,-1),0)][:50]
-
-    #output_sentences = [model.decode(x['tokens']) for x in outputs]
-    #output_sentences=[model.decode(x) for x in outputs]
     output_sentences=[model.bpe.decode(model.task.source_dictionary.string(x)) for x in outputs]
     if output_sentences==[]:
         print("find a missing prefix sentence!!!")
         return [],[],[],[]
-    # for s1 in output_sentences:
-    #     print(s1[:200])
-    # for s1 in outputs:
-    #     print(model.tgt_dict.string(s1)[:150])   
-    #bertscore_substitutes, ranking_bertscore_substitutes = extract_substitute(output_sentences, sentence, complex_word, threshold)
+
     bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores = extract_substitute(output_sentences, sentence, complex_word,
                                                                               threshold,outputs_scores,word_index,sentence_words,target_pos,target_lemma)
     #print(pre_scores)
@@ -1112,33 +938,12 @@ def lexicalSubstitute(model, sentence, sentence_words,prefix,word_index,complex_
 
     # if index_complex!=0:
     tmp_bertscore_substitutes=[" "+word1.strip() for word1 in bertscore_substitutes]
-    # else:
-    #     tmp_bertscore_substitutes=[" "+word1.strip().capitalize() for word1 in bertscore_substitutes]
 
-    #glove_scores_static=give_embedding_scores_v4(complex_tokens[:-1],tmp_bertscore_substitutes,model,temperature=0.2,tokens_embedding=model.models[0].state_dict()["decoder.embed_tokens.weight"].cpu())
-    #glove_scores_dynamic=give_dynamic_embedding_scores(model,tmp_bertscore_substitutes,prefix,sentence,index_complex,layer_index=-1)
-    # outputs_scores=torch.tensor(outputs_scores)+glove_scores_static
-    # outputs_scores=torch.tensor(outputs_scores)
-    # outputs_scores=outputs_scores.tolist()
 
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #glove_scores=glove_scores-glove_scores
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bert_score(sentence,complex_word,word_index,bertscore_substitutes)
-    #glove_scores=cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
-    
-    # real_prev_scores=torch.tensor(real_prev_scores)+glove_scores_static
-    # real_prev_scores=real_prev_scores.tolist()
-    # import pdb
-    # pdb.set_trace()
-    #import pdb
-    #pdb.set_trace()
-    #real_prev_scores=real_prev_scores.tolist()
-    #bertscore_substitutes, ranking_bertscore_substitutes = extractSubstitute_bertscore(output_sentences, sentence, complex_word, threshold)
-    #suffix_substitutes = extractSubstitute_suffix(output_sentences, sentence, complex_word)
-    #return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores_static.tolist()
-    #return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores.tolist()
-    return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,1
+    glove_scores=cal_bart_score(sentence,complex_word,word_index,bertscore_substitutes)+cal_bleurt_score(sentence,complex_word,word_index,bertscore_substitutes)
+
+    return bertscore_substitutes, ranking_bertscore_substitutes,real_prev_scores,glove_scores.tolist()
+
 
 def pos_filter(pos_vocab,target_pos,candi,candi_lemma):
         PosMap={"v":"VERB", "n":"NOUN", "a":"ADJ", "r":"ADV"}
@@ -1272,18 +1077,10 @@ def main():
     reader = Reader_lexical()
     reader.create_feature(args.eval_dir)
     evaluation_metric = evaluation()
-    # en2en = TransformerModel.from_pretrained(args.paraphraser_path, checkpoint_file=args.paraphraser_model,bpe=args.bpe,
-    #                                          bpe_codes=args.bpe_codes).cuda().eval()
+
     en2en = BARTModel.from_pretrained('/home/yz/liukang/liukang/fairseq-main_prefix/fairseq-main_prefix/checkpoints/para/bart/bart.base', checkpoint_file='checkpoint_2_105000.pt').cuda().eval()
 
-    #CS = []
 
-    #CS2 = []
-
-    #CS3 = []
-
-    #output_sr_file.write("beam:", args.beam, " bertscore:", args.bertscore)
-    #output_sr_file.write('\n')
     bert_substitutes_all=[]
     real_prev_scores_all=[]
     real_embed_scores_all=[]
@@ -1292,10 +1089,7 @@ def main():
     from tqdm import tqdm
     for main_word in tqdm(reader.words_candidate):
         count_gen+=1
-        # if count_gen==51:
-        #     break
-        # if main_word!="job.n":
-        #     continue
+
         for instance in reader.words_candidate[main_word]:
             for context in reader.words_candidate[main_word][instance]:
                 text = context[1]
@@ -1485,28 +1279,13 @@ def main():
                 real_prev_scores_all.append(real_prev_scores)
                 real_embed_scores_all.append(real_embed_scores)
             
-                # write_all_results(main_word, instance, target_pos, args.output_SR_file,
-                #                   bert_substitutes, real_prev_scores, evaluation_metric)     
-                                                
-                #CS2.append(bert_substitutes[:10])
 
-                #CS3.append(bert_rank_substitutes[:10])
-                #final_str=" ".join(complex_labels[i])+"|||"+" ".join(bert_rank_substitutes[:10])+"|||"+" ".join(list(set(complex_labels[i])&set(bert_rank_substitutes[:10])))+"\n"
-                #final_str="&".join(complex_labels[i])+"|||"+" ".join(bert_substitutes[:10])+"|||"+" ".join(list(set(complex_labels[i])&set(bert_substitutes[:10])))+"\n"
 
     import numpy as np
     import copy
     import os
 
-    range1=np.arange(1,2,1)
-    #range1=np.arange(0.1,2,0.1)
-    #range1=np.arange(1,10,0.1)
-    #range1=np.arange(0,1,1)\
-    #range1=np.arange(0.1,2,0.1)
-    #range1=np.arange(0.005,0.2,0.005)
-    #range1=np.arange(0.3,1,0.1)
-    #range2_log_softmax=np.arange(0.2,0.4,0.2)
-    #range2_log_softmax=np.arange(0.,0.4,0.2)
+    range1=np.arange(0.02,0.04,0.02)
     range2_log_softmax=np.arange(1,2,1)
     for log_quto in range2_log_softmax:
         work_dir="ls07_search_results.bart/log."+str(round(log_quto,2))+"/"
@@ -1522,10 +1301,7 @@ def main():
 
             for main_word in tqdm(reader.words_candidate):
                 count_gen2+=1
-                # if count_gen2==51:
-                #     break
-                # if main_word!="job.n":
-                #     continue
+
                 for instance in reader.words_candidate[main_word]:
                     for context in reader.words_candidate[main_word][instance]:
                         text = context[1]
@@ -1543,38 +1319,21 @@ def main():
                             target_pos=target_pos
                         ).lower().strip()      
 
-                        # target_lemma = lemma_word_spacy(
-                        #     target_word,
-                        #     target_pos=target_pos
-                        # ).lower().strip()      
-
-                        #print("ori_score",real_prev_scores_all[count_1][:10])
                         tmp_log_embed_scores=torch.tensor(tmp_real_embed_scores_all[count_1])
-                        #tmp_log_embed_scores=torch.tensor(tmp_real_embed_scores_all[count_1])/1
-                        #tmp_log_embed_scores=F.log_softmax(tmp_log_embed_scores,dim=0)
-                        tmp_log_embed_scores=tmp_log_embed_scores.tolist()
-                        # for k1 in range(len(tmp_real_prev_scores_all[count_1])):
-                        #     tmp_real_prev_scores_all[count_1][k1]=tmp_real_prev_scores_all[count_1][k1]-tmp_real_embed_scores_all[count_1][k1]
-                            # tmp_real_prev_scores_all[count_1][k1]+=embed_quto*tmp_real_embed_scores_all[count_1][k1] 
-                        # print("predict:",embed_quto*torch.tensor(tmp_real_prev_scores_all[count_1][:10]))
-                        # print("bart+bleurt:",torch.tensor(tmp_log_embed_scores[:10]))
-                        #print("*"*100)
 
-                        # for k1 in range(len(tmp_real_prev_scores_all[count_1])):
-                        #     #tmp_real_prev_scores_all[count_1][k1]=tmp_real_prev_scores_all[count_1][k1]-tmp_real_embed_scores_all[count_1][k1]
-                        #     #tmp_real_prev_scores_all[count_1][k1]+=embed_quto*tmp_log_embed_scores[k1]   
-                        #     #tmp_real_prev_scores_all[count_1][k1]=tmp_real_prev_scores_all[count_1][k1]+embed_quto*tmp_log_embed_scores[k1]
-                        #     #tmp_real_prev_scores_all[count_1][k1]=embed_quto*tmp_real_prev_scores_all[count_1][k1]+tmp_log_embed_scores[k1]
-                        #     tmp_real_prev_scores_all[count_1][k1]=tmp_log_embed_scores[k1]
-                        #     pass
+                        tmp_log_embed_scores=tmp_log_embed_scores.tolist()
+
+                        for k1 in range(len(tmp_real_prev_scores_all[count_1])):
+                            tmp_real_prev_scores_all[count_1][k1]=embed_quto*tmp_real_prev_scores_all[count_1][k1]+tmp_log_embed_scores[k1]
+                            pass
                         
                         write_all_results(main_word, instance, target_pos, work_dir+args.output_SR_file+".embed."+str(embed_quto),
                                         tmp_bert_substitutes_all[count_1], tmp_real_prev_scores_all[count_1], evaluation_metric)
 
-                        #print("after_score",real_prev_scores_all[count_1][:10])
+
 
                         count_1+=1  
-            #print("*"*100)
+
             test_golden_file="data/LS07/test/lst_test.gold"
             output_results=work_dir+args.output_SR_file+".embed."+str(embed_quto)
             results_file=work_dir+args.output_score_file+".embed."+str(embed_quto)
@@ -1598,4 +1357,3 @@ def main():
             )
 if __name__ == "__main__":
     main()
-
