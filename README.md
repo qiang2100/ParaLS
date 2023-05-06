@@ -28,9 +28,16 @@ input "run_LS_Paraphraser.multi.ls14.sh"
 
 
 # Citation
-
+Jipeng Qiang and Kang Liu contributed the code. 
 Please cite as:
 
-``` bibtex
-
-```
+@inproceedings{qiang-etal-2023-ParaLS,
+    title = "ParaLS: Lexical Substitution via Pretrained Paraphraser",
+    author = "Qiang, Jipeng  and
+      Liu, Kang  and
+      Li, Yun  and
+      Yuan, Yunhao  and
+      Zhu, Yi",
+    booktitle = "Proceedings of the 61th Annual Meeting of the Association for Computational Linguistics",
+    year = "2023"
+    }
