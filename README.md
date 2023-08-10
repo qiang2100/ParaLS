@@ -14,17 +14,19 @@ Lexical substitution (LS) aims at finding appropriate substitutes for a target w
 
 ## Step 1: Downlaod the pretrained model
 
-You need to download the paraphraser(Transformer) from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing) and paraphraser(BART) from[here](https://drive.google.com/file/d/1hgUtUHmxw8R4tsnGsp8usS2vr773DJ6o/view?usp=drive_link), and put it into folder "checkpoints/⁨para⁩/transformer/⁩" and "checkpoints/⁨para⁩/bart/⁩" seperately. For candidates ranking, we use [BLEURT](https://huggingface.co/Elron/bleurt-large-512) and BARTscore(https://github.com/neulab/BARTScore).
+You need to download the paraphraser(Transformer) from [here](https://drive.google.com/file/d/1o5fUGJnTxMe9ASQWTxIlbWmbEqN_RQ6D/view?usp=sharing) and paraphraser(BART) from [here](https://drive.google.com/file/d/1hgUtUHmxw8R4tsnGsp8usS2vr773DJ6o/view?usp=drive_link), and put it into folder "checkpoints/⁨para⁩/transformer/⁩" and "checkpoints/⁨para⁩/bart/⁩" seperately. For candidates ranking, we use [BLEURT](https://huggingface.co/Elron/bleurt-large-512) and BARTscore(https://github.com/neulab/BARTScore).
 
 ## Step 2: Run our code 
 
-(1) run ParaLS for lexical substitute dataset LS07(Default BART)
+(1) run ParaLS for lexical substitute dataset LS07
 
-input "run_LS_Paraphraser.multi.ls07.sh"
+sh run_LS_Paraphraser.multi.ls07.sh # Transformer
+sh run_LS_Paraphraser.multi.ls07.bart.sh # BART
 
 (2)run ParaLS for lexical substitute dataset LS14(Default BART)
 
-input "run_LS_Paraphraser.multi.ls14.sh"
+sh run_LS_Paraphraser.multi.ls14.sh # Transformer
+sh run_LS_Paraphraser.multi.ls14.bart.sh # BART
 
 
 # Citation
@@ -37,3 +39,5 @@ Please cite as:
     booktitle = "Proceedings of the 61th Annual Meeting of the Association for Computational Linguistics",
     year = "2023"
     }
+# Contact 
+If you have any question about the code. Please contact yzunlplk@163.com
