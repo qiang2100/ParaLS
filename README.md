@@ -21,11 +21,13 @@ You need to download the paraphraser(Transformer) from [here](https://drive.goog
 (1) run ParaLS for lexical substitute dataset LS07
 
 sh run_LS_Paraphraser.multi.ls07.sh # Transformer
+
 sh run_LS_Paraphraser.multi.ls07.bart.sh # BART
 
 (2)run ParaLS for lexical substitute dataset LS14(Default BART)
 
 sh run_LS_Paraphraser.multi.ls14.sh # Transformer
+
 sh run_LS_Paraphraser.multi.ls14.bart.sh # BART
 
 
@@ -41,4 +43,4 @@ Please cite as:
     }
     
 # Contact 
-If you have any question about the code. Please contact yzunlplk@163.com
+If you have any question about how to run the code. Please contact yzunlplk@163.com.
